@@ -85,9 +85,15 @@
       border-radius: 8px;
       transition: background 0.15s, border-color 0.15s;
     }
+
+    /* ★ 学年ごとの左フチのアクセントカラー ★ */
+    .member-card.grade-1 { border-left: 6px solid #4299e1; } /* 1年生: 青 */
+    .member-card.grade-2 { border-left: 6px solid #48bb78; } /* 2年生: 緑 */
+    .member-card.grade-3 { border-left: 6px solid #ed8936; } /* 3年生: オレンジ */
+    .member-card.grade-4 { border-left: 6px solid #9f7aea; } /* 4年生: 紫 */
+
     .member-card.checked {
       background: #ebf8ff;
-      border-color: #90cdf4;
     }
     .member-info {
       display: flex;
@@ -144,6 +150,20 @@
       outline: none;
       border-color: #63b3ed;
     }
+
+    /* スマホ対応（画面幅600px以下） */
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .container { padding: 16px; }
+      h1 { font-size: 1.25rem; }
+      .action-bar button { flex: 1; padding: 12px 8px; }
+      .member-grid { grid-template-columns: 1fr; max-height: 350px; }
+      .member-card { padding: 12px; }
+      .check-wrapper input[type="checkbox"] { width: 26px; height: 26px; }
+      .result-header { flex-direction: column; align-items: stretch; gap: 8px; }
+      .result-header button { width: 100%; padding: 12px; }
+      textarea.result-box { height: 180px; font-size: 0.9rem; }
+    }
   </style>
 </head>
 <body>
@@ -170,93 +190,86 @@
 
 <script>
   // ----------------------------------------------------
-  // ★ メンバー登録リスト（ここにお名前を入力してください）
+  // ★ メンバー登録リスト
   // ----------------------------------------------------
- const initialMembers = [
-    // 無級 (14名)
-    { id: 1,  name: "片岡", kana:"カタオカ", rank: "無級", grade: "1年" },
-    { id: 2,  name: "國次", kana:"クニツグ", rank: "無級", grade: "1年" },
-    { id: 3,  name: "黒田", kana:"クロタ", rank: "無級", grade: "2年" },
-    { id: 4,  name: "作山", kana:"サクヤマ", rank: "無級", grade: "3年" },
-    { id: 5,  name: "佐渡", kana:"サド", rank: "無級", grade: "2年" },
-    { id: 6,  name: "新出", kana:"シンデ", rank: "無級", grade: "1年" },
-    { id: 7,  name: "髙橋", kana:"タカハシ", rank: "無級", grade: "1年" },
-    { id: 8,  name: "鶴岡", kana:"ツルオカ", rank: "無級", grade: "1年" },
-    { id: 9,  name: "永井", kana:"ナガイ", rank: "無級", grade: "1年" },
-    { id: 10, name: "星", kana:"ホシ",rank: "無級", grade: "1年" },
-    { id: 11, name: "山形", kana:"ヤマガタ", rank: "無級", grade: "1年" },
-    { id: 12, name: "山下と", kana:"ヤマシタ", rank: "無級", grade: "1年" },
-    { id: 13, name: "チョウ", kana:"チョウ", rank: "無級", grade: "1年" },
-    { id: 14, name: "新井", kana:"アライ", rank: "無級", grade: "2年" },
+  const initialMembers = [
+    // 無級
+    { id: 1,  name: "片岡", kana: "カタオカ", rank: "無級", grade: "1年" },
+    { id: 2,  name: "國次", kana: "クニツグ", rank: "無級", grade: "1年" },
+    { id: 3,  name: "黒田", kana: "クロダ", rank: "無級", grade: "2年" },
+    { id: 4,  name: "作山", kana: "サクヤマ", rank: "無級", grade: "2年" },
+    { id: 5,  name: "佐渡", kana: "サド", rank: "無級", grade: "2年" },
+    { id: 6,  name: "新出", kana: "シンデ", rank: "無級", grade: "1年" },
+    { id: 7,  name: "髙橋", kana: "タカハシ", rank: "無級", grade: "1年" },
+    { id: 8,  name: "鶴岡", kana: "ツルオカ", rank: "無級", grade: "1年" },
+    { id: 9,  name: "永井", kana: "ナガイ", rank: "無級", grade: "1年" },
+    { id: 10, name: "星", kana: "ホシ", rank: "無級", grade: "1年" },
+    { id: 11, name: "山形", kana: "ヤマガタ", rank: "無級", grade: "1年" },
+    { id: 12, name: "山下と", kana: "ヤマシタ", rank: "無級", grade: "1年" },
+    { id: 13, name: "チョウ", kana: "チョウ", rank: "無級", grade: "1年" },
+    { id: 14, name: "新井", kana: "アライ", rank: "無級", grade: "2年" },
 
-    // 初級 (10名)
-    { id: 15, name: "山村", rank: "初級", grade: "4年" },
-    { id: 16, name: "箱崎", rank: "初級", grade: "3年" },
-    { id: 17, name: "亀井", rank: "初級", grade: "3年" },
-    { id: 18, name: "小泉", kana:"コイズミ", rank: "初級", grade: "2年" },
-    { id: 19, name: "庭田", kana:"ニワタ", rank:"初級", grade: "2年" },
-    { id: 20, name: "芳賀", kana:"ハガ", rank: "初級", grade: "2年" },
-    { id: 21, name: "平岡", kana:"ヒラオカ", rank: "初級", grade: "2年" },
-    { id: 22, name: "山下", kana:"ヤマシタ", rank: "初級", grade: "2年" },
-    { id: 23, name: "山川", kana:"ヤマカワ", rank: "初級", grade: "2年" },
-    { id: 24, name: "山田太郎", rank: "初級", grade: "1年" },
+    // 初級
+    { id: 15, name: "山村", kana: "ヤマムラ", rank: "初級", grade: "4年" },
+    { id: 16, name: "箱崎", kana: "ハコザキ", rank: "初級", grade: "3年" },
+    { id: 17, name: "山川", kana: "ヤマカワ", rank: "初級", grade: "2年" },
+    { id: 18, name: "亀井", kana: "カメイ", rank: "初級", grade: "3年" },
+    { id: 19, name: "庭田", kana: "ニワタ", rank: "初級", grade: "2年" },
+    { id: 20, name: "芳賀", kana: "ハガ", rank: "初級", grade: "2年" },
+    { id: 21, name: "山下", kana: "ヤマシタ", rank: "初級", grade: "2年" },
+    { id: 22, name: "平岡", kana: "ヒラオカ", rank: "初級", grade: "2年" },
 
-    // 7級 (3名)
-    { id: 25, name: "伊吹", kana:"イブキ", rank: "7級", grade: "3年" },
-    { id: 26, name: "海老根",kana:"エビネ", rank: "7級", grade: "2年" },
-    { id: 27, name: "井口", kana:"イグチ", rank: "7級", grade: "4年" },
-
-    // 6級 (3名)
-    { id: 28, name: "磯村", kana:"イソムラ", rank: "6級", grade: "2年" },
-    { id: 29, name: "佐村", kana:"サムラ", rank: "6級", grade: "2年" },
-    { id: 30, name: "田中そ", kana:"タナカ", rank: "6級", grade: "1年" },
-
-    // 5級 (2名)
-    { id: 31, name: "山本", kana:"ヤマモト", rank: "5級", grade: "2年" },
-    { id: 32, name: "栗山", kana:"クリヤマ", rank: "5級", grade: "1年" },
-
-    // 3級 (3名)
-    { id: 33, name: "小元", kana:"コモト", rank: "3級", grade: "4年" },
-    { id: 34, name: "味澤", kana:"アジサワ", rank: "3級", grade: "2年" },
-    { id: 35, name: "立川", kana:"タチカワ", rank: "3級", grade: "2年" },
-
-    // 2級 (2名)
-    { id: 36, name: "菅田", kana:"スダ", rank: "2級", grade: "2年" },
-    { id: 37, name: "利藤", kana:"リトウ", rank: "2級", grade: "4年" },
-
-    // 1級 (3名)
-    { id: 38, name: "相川", kana:"アイカワ", rank: "1級", grade: "3年" },
-    { id: 39, name: "田中", kana:"タナカ", rank: "1級", grade: "3年" },
-    { id: 40, name: "久原", kana:"クバラ", rank: "1級", grade: "4年" }
-  
+    // 1級〜7級
+    { id: 25, name: "相川", kana: "アイカワ", rank: "1級", grade: "3年" },
+    { id: 26, name: "田中", kana: "タナカ", rank: "1級", grade: "3年" },
+    { id: 27, name: "久原", kana: "クバラ", rank: "1級", grade: "4年" },
+    { id: 28, name: "利藤", kana: "リトウ", rank: "2級", grade: "4年" },
+    { id: 29, name: "菅田", kana: "スダ", rank: "2級", grade: "2年" },
+    { id: 30, name: "小元", kana: "コモト", rank: "3級", grade: "4年" },
+    { id: 31, name: "味澤", kana: "アジサワ", rank: "3級", grade: "2年" },
+    { id: 32, name: "立川", kana: "タチカワ", rank: "3級", grade: "2年" },
+    { id: 33, name: "山本", kana: "ヤマモト", rank: "5級", grade: "2年" },
+    { id: 34, name: "栗山", kana: "クリヤマ", rank: "5級", grade: "1年" },
+    { id: 35, name: "佐村", kana: "サムラ", rank: "6級", grade: "2年" },
+    { id: 31, name: "田中そ", kana: "タナカ", rank: "6級", grade: "1年" },
+    { id: 32, name: "伊吹", kana: "イブキ", rank: "7級", grade: "3年" },
+    { id: 33, name: "海老根", kana: "エビネ", rank: "7級", grade: "2年" },
+    { id: 34, name: "井口", kana: "イグチ", rank: "7級", grade: "4年" }
+   
   ];
 
-
-  // 級の優先ランク（無級 ➔ 初級 ➔ 1級 ➔ 2級 ➔ 3級 ➔ 4級 ➔ 5級 ➔ 6級 ➔ 7級）
+ 
+  // 級の優先ランク
   const rankPriority = {
-    "無級": 0,
-    "初級": 1,
-    "1級": 2,
-    "2級": 3,
-    "3級": 4,
-    "4級": 5,
-    "5級": 6,
-    "6級": 7,
-    "7級": 8
+    "無級": 0, "初級": 1, "1級": 2, "2級": 3,
+    "3級": 4, "4級": 5, "5級": 6, "6級": 7, "7級": 8
   };
+
+  // 学年の数字を抽出するヘルパー関数（"1年" ➔ 1、"一年" ➔ 1、"4年" ➔ 4）
+  function parseGrade(gradeStr) {
+    if (!gradeStr) return 99;
+    const kanjiMap = { "一": 1, "二": 2, "三": 3, "四": 4, "１": 1, "２": 2, "３": 3, "４": 4 };
+    for (let key in kanjiMap) {
+      if (gradeStr.includes(key)) return kanjiMap[key];
+    }
+    const num = parseInt(gradeStr, 10);
+    return isNaN(num) ? 99 : num;
+  }
 
   let members = [];
 
   // 初期化関数
   function init() {
     members = initialMembers.map(m => ({ ...m, checked: false }));
-    // 画面上の並び順（1年 ➔ 2年 ➔ 3年、同じ学年内はフリガナ順）
+    
+    // 画面一覧の並び順（①学年昇順：1年 ➔ 2年 ➔ 3年 ➔ 4年、②同じ学年内はフリガナ順）
     members.sort((a, b) => {
-      const gA = parseInt(a.grade) || 0;
-      const gB = parseInt(b.grade) || 0;
-      if (gA !== gB) return gA - gB;
+      const gA = parseGrade(a.grade);
+      const gB = parseGrade(b.grade);
+      if (gA !== gB) return gA - gB; // 1 < 2 < 3 < 4
       return a.kana.localeCompare(b.kana, 'ja');
     });
+
     render();
   }
 
@@ -266,8 +279,11 @@
     listEl.innerHTML = '';
 
     members.forEach(member => {
+      const gradeNum = parseGrade(member.grade);
+      const gradeClass = `grade-${gradeNum}`;
+
       const card = document.createElement('div');
-      card.className = `member-card ${member.checked ? 'checked' : ''}`;
+      card.className = `member-card ${gradeClass} ${member.checked ? 'checked' : ''}`;
       
       card.innerHTML = `
         <div class="member-info">
@@ -298,7 +314,6 @@
   }
 
   function updateResult() {
-    // 1. チェックされている人のみ抽出
     const attendees = members.filter(m => m.checked);
 
     if (attendees.length === 0) {
@@ -306,27 +321,22 @@
       return;
     }
 
-    // 2. 指定条件での並び替え（ソート）
+    // コピー結果の並び替え（①級 ➔ ②学年 ➔ ③フリガナ順）
     attendees.sort((a, b) => {
-      // ① 【最優先】級順 (無級 ➔ 初級 ➔ 1級 ➔ 2級 ➔ 3級 ...)
       const rA = rankPriority[a.rank] ?? 99;
       const rB = rankPriority[b.rank] ?? 99;
       if (rA !== rB) return rA - rB;
 
-      // ② 【2番目】学年順 (1年 ➔ 2年 ➔ 3年)
-      const gA = parseInt(a.grade) || 0;
-      const gB = parseInt(b.grade) || 0;
+      const gA = parseGrade(a.grade);
+      const gB = parseGrade(b.grade);
       if (gA !== gB) return gA - gB;
 
-      // ③ 【3番目】フリガナで「あいうえお順」
       return a.kana.localeCompare(b.kana, 'ja');
     });
 
-    // 3. 名前のみ抽出し、「5秒」を間に挟む
     const names = attendees.map(m => m.name);
     let resultString = names.join('\n5秒\n');
 
-    // 4. 定型文（末尾の文章）を追加
     const footerText = "\n5秒\n初級課題\n一級課題\nよろしくお願いいたします。";
     resultString += footerText;
 
@@ -351,7 +361,6 @@
     })[m]);
   }
 
-  // ページ読み込み完了時に確実に実行
   window.addEventListener('DOMContentLoaded', init);
 </script>
 
