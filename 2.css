@@ -1,0 +1,42 @@
+/* ----------------------------------------------------
+       スマホ対応（画面幅が600px以下の時）
+       ---------------------------------------------------- */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px; /* 余白を狭くして画面を広く使う */
+      }
+      .container {
+        padding: 16px; /* 内側の余白を小さく */
+      }
+      h1 {
+        font-size: 1.25rem; /* 見出しを少し小さく */
+      }
+      .action-bar button {
+        flex: 1; /* ボタンを横いっぱいに均等配置 */
+        padding: 12px 8px; /* タップしやすいように上下幅を大きく */
+      }
+      .member-grid {
+        grid-template-columns: 1fr; /* カードを1列で縦並びにする */
+        max-height: 350px; /* スマホで見やすい高さに調整 */
+      }
+      .member-card {
+        padding: 12px;
+      }
+      .check-wrapper input[type="checkbox"] {
+        width: 26px; /* チェックボックスを押しやすく大きく */
+        height: 26px;
+      }
+      .result-header {
+        flex-direction: column; /* 見出しとコピーボタンを縦並びに */
+        align-items: stretch;
+        gap: 8px;
+      }
+      .result-header button {
+        width: 100%; /* コピーボタンを押しやすく全幅に */
+        padding: 12px;
+      }
+      textarea.result-box {
+        height: 180px;
+        font-size: 0.9rem;
+      }
+    }

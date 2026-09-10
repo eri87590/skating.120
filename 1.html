@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>出席管理・ソートツール</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background-color: #f4f6f9;
+      color: #333;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: #1a252f;
+    }
+    p.desc {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .btn-secondary {
+      background-color: #e2e8f0;
+      color: #4a5568;
+    }
+    .btn-secondary:hover {
+      background-color: #cbd5e0;
+    }
+    .btn-success {
+      background-color: #38a169;
+      color: white;
+    }
+    .btn-success:hover {
+      background-color: #2f855a;
+    }
+    .member-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-bottom: 30px;
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 4px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .member-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .member-card.checked {
+      background: #ebf8ff;
+      border-color: #90cdf4;
+    }
+    .member-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+    .member-name {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #2d3748;
+    }
+    .member-tags {
+      font-size: 0.85rem;
+      color: #718096;
+    }
+    .check-wrapper {
+      margin-left: 10px;
+    }
+    .check-wrapper input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      accent-color: #3182ce;
+    }
+    .result-section {
+      background: #1a202c;
+      color: #f7fafc;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .result-header h2 {
+      font-size: 1.1rem;
+    }
+    textarea.result-box {
+      width: 100%;
+      height: 240px;
+      background: #2d3748;
+      color: #edf2f7;
+      border: 1px solid #4a5568;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.95rem;
+      resize: vertical;
+    }
+    textarea.result-box:focus {
+      outline: none;
+      border-color: #63b3ed;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>出席者管理・自動ソートツール</h1>
+  <p class="desc">チェックを入れると【①級 ➔ ②学年 ➔ ③フリガナのあいうえお順】でソートされた名前が下に出力されます。</p>
+
+  <div class="action-bar">
+    <button class="btn-secondary" onclick="selectAll(true)">全員チェック</button>
+    <button class="btn-secondary" onclick="selectAll(false)">全員解除</button>
+  </div>
+
+  <div class="member-grid" id="memberList"></div>
+
+  <div class="result-section">
+    <div class="result-header">
+      <h2>結果（コピー用リスト）</h2>
+      <button class="btn-success" onclick="copyResult()">結果をコピー</button>
+    </div>
+    <textarea id="resultText" class="result-box" readonly placeholder="チェックされた人がここに表示されます..."></textarea>
+  </div>
+</div>
+
+<script>
+  // ----------------------------------------------------
+  // ★ メンバー登録リスト（ここにお名前を入力してください）
+  // ----------------------------------------------------
+ const initialMembers = [
+    // 無級 (14名)
+    { id: 1,  name: "片岡", kana:"カタオカ", rank: "無級", grade: "1年" },
+    { id: 2,  name: "國次", kana:"クニツグ", rank: "無級", grade: "1年" },
+    { id: 3,  name: "黒田", kana:"クロタ", rank: "無級", grade: "2年" },
+    { id: 4,  name: "作山", kana:"サクヤマ", rank: "無級", grade: "3年" },
+    { id: 5,  name: "佐渡", kana:"サド", rank: "無級", grade: "2年" },
+    { id: 6,  name: "新出", kana:"シンデ", rank: "無級", grade: "1年" },
+    { id: 7,  name: "髙橋", kana:"タカハシ", rank: "無級", grade: "1年" },
+    { id: 8,  name: "鶴岡", kana:"ツルオカ", rank: "無級", grade: "1年" },
+    { id: 9,  name: "永井", kana:"ナガイ", rank: "無級", grade: "1年" },
+    { id: 10, name: "星", kana:"ホシ",rank: "無級", grade: "1年" },
+    { id: 11, name: "山形", kana:"ヤマガタ", rank: "無級", grade: "1年" },
+    { id: 12, name: "山下と", kana:"ヤマシタ", rank: "無級", grade: "1年" },
+    { id: 13, name: "チョウ", kana:"チョウ", rank: "無級", grade: "1年" },
+    { id: 14, name: "新井", kana:"アライ", rank: "無級", grade: "2年" },
+
+    // 初級 (10名)
+    { id: 15, name: "山村", rank: "初級", grade: "4年" },
+    { id: 16, name: "箱崎", rank: "初級", grade: "3年" },
+    { id: 17, name: "亀井", rank: "初級", grade: "3年" },
+    { id: 18, name: "小泉", kana:"コイズミ", rank: "初級", grade: "2年" },
+    { id: 19, name: "庭田", kana:"ニワタ", rank:"初級", grade: "2年" },
+    { id: 20, name: "芳賀", kana:"ハガ", rank: "初級", grade: "2年" },
+    { id: 21, name: "平岡", kana:"ヒラオカ", rank: "初級", grade: "2年" },
+    { id: 22, name: "山下", kana:"ヤマシタ", rank: "初級", grade: "2年" },
+    { id: 23, name: "山川", kana:"ヤマカワ", rank: "初級", grade: "2年" },
+    { id: 24, name: "山田太郎", rank: "初級", grade: "1年" },
+
+    // 7級 (3名)
+    { id: 25, name: "伊吹", kana:"イブキ", rank: "7級", grade: "3年" },
+    { id: 26, name: "海老根",kana:"エビネ", rank: "7級", grade: "2年" },
+    { id: 27, name: "井口", kana:"イグチ", rank: "7級", grade: "4年" },
+
+    // 6級 (3名)
+    { id: 28, name: "磯村", kana:"イソムラ", rank: "6級", grade: "2年" },
+    { id: 29, name: "佐村", kana:"サムラ", rank: "6級", grade: "2年" },
+    { id: 30, name: "田中そ", kana:"タナカ", rank: "6級", grade: "1年" },
+
+    // 5級 (2名)
+    { id: 31, name: "山本", kana:"ヤマモト", rank: "5級", grade: "2年" },
+    { id: 32, name: "栗山", kana:"クリヤマ", rank: "5級", grade: "1年" },
+
+    // 3級 (3名)
+    { id: 33, name: "小元", kana:"コモト", rank: "3級", grade: "4年" },
+    { id: 34, name: "味澤", kana:"アジサワ", rank: "3級", grade: "2年" },
+    { id: 35, name: "立川", kana:"タチカワ", rank: "3級", grade: "2年" },
+
+    // 2級 (2名)
+    { id: 36, name: "菅田", kana:"スダ", rank: "2級", grade: "2年" },
+    { id: 37, name: "利藤", kana:"リトウ", rank: "2級", grade: "4年" },
+
+    // 1級 (3名)
+    { id: 38, name: "相川", kana:"アイカワ", rank: "1級", grade: "3年" },
+    { id: 39, name: "田中", kana:"タナカ", rank: "1級", grade: "3年" },
+    { id: 40, name: "久原", kana:"クバラ", rank: "1級", grade: "4年" }
+  
+  ];
+
+
+  // 級の優先ランク（無級 ➔ 初級 ➔ 1級 ➔ 2級 ➔ 3級 ➔ 4級 ➔ 5級 ➔ 6級 ➔ 7級）
+  const rankPriority = {
+    "無級": 0,
+    "初級": 1,
+    "1級": 2,
+    "2級": 3,
+    "3級": 4,
+    "4級": 5,
+    "5級": 6,
+    "6級": 7,
+    "7級": 8
+  };
+
+  let members = [];
+
+  // 初期化関数
+  function init() {
+    members = initialMembers.map(m => ({ ...m, checked: false }));
+    // 画面上の並び順（1年 ➔ 2年 ➔ 3年、同じ学年内はフリガナ順）
+    members.sort((a, b) => {
+      const gA = parseInt(a.grade) || 0;
+      const gB = parseInt(b.grade) || 0;
+      if (gA !== gB) return gA - gB;
+      return a.kana.localeCompare(b.kana, 'ja');
+    });
+    render();
+  }
+
+  // 画面描画
+  function render() {
+    const listEl = document.getElementById('memberList');
+    listEl.innerHTML = '';
+
+    members.forEach(member => {
+      const card = document.createElement('div');
+      card.className = `member-card ${member.checked ? 'checked' : ''}`;
+      
+      card.innerHTML = `
+        <div class="member-info">
+          <span class="member-name">${escapeHtml(member.name)}</span>
+          <span class="member-tags">${member.rank} / ${member.grade}</span>
+        </div>
+        <div class="check-wrapper">
+          <input type="checkbox" ${member.checked ? 'checked' : ''} onchange="toggleCheck(${member.id})">
+        </div>
+      `;
+      listEl.appendChild(card);
+    });
+
+    updateResult();
+  }
+
+  function toggleCheck(id) {
+    const m = members.find(item => item.id === id);
+    if (m) {
+      m.checked = !m.checked;
+      render();
+    }
+  }
+
+  function selectAll(flag) {
+    members.forEach(m => m.checked = flag);
+    render();
+  }
+
+  function updateResult() {
+    // 1. チェックされている人のみ抽出
+    const attendees = members.filter(m => m.checked);
+
+    if (attendees.length === 0) {
+      document.getElementById('resultText').value = "";
+      return;
+    }
+
+    // 2. 指定条件での並び替え（ソート）
+    attendees.sort((a, b) => {
+      // ① 【最優先】級順 (無級 ➔ 初級 ➔ 1級 ➔ 2級 ➔ 3級 ...)
+      const rA = rankPriority[a.rank] ?? 99;
+      const rB = rankPriority[b.rank] ?? 99;
+      if (rA !== rB) return rA - rB;
+
+      // ② 【2番目】学年順 (1年 ➔ 2年 ➔ 3年)
+      const gA = parseInt(a.grade) || 0;
+      const gB = parseInt(b.grade) || 0;
+      if (gA !== gB) return gA - gB;
+
+      // ③ 【3番目】フリガナで「あいうえお順」
+      return a.kana.localeCompare(b.kana, 'ja');
+    });
+
+    // 3. 名前のみ抽出し、「5秒」を間に挟む
+    const names = attendees.map(m => m.name);
+    let resultString = names.join('\n5秒\n');
+
+    // 4. 定型文（末尾の文章）を追加
+    const footerText = "\n5秒\n初級課題\n一級課題\nよろしくお願いいたします。";
+    resultString += footerText;
+
+    document.getElementById('resultText').value = resultString;
+  }
+
+  function copyResult() {
+    const txt = document.getElementById('resultText');
+    if (!txt.value.trim()) {
+      alert("選択された出席者がいません。");
+      return;
+    }
+    txt.select();
+    navigator.clipboard.writeText(txt.value).then(() => {
+      alert("結果をクリップボードにコピーしました！");
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    })[m]);
+  }
+
+  // ページ読み込み完了時に確実に実行
+  window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
