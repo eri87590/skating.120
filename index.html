@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>曲かけ順メーカー</title>
+  <title>出席管理・ソートツール</title>
   <style>
     * {
       box-sizing: border-box;
@@ -35,6 +35,73 @@
       color: #666;
       margin-bottom: 20px;
     }
+
+    /* ★ 練習情報入力エリアのスタイル ★ */
+    .practice-info-panel {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .info-label {
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: #2d3748;
+      min-width: 70px;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    .time-input {
+      padding: 6px 10px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      width: 100px;
+    }
+    .place-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-place {
+      background-color: #edf2f7;
+      color: #4a5568;
+      border: 1px solid #cbd5e0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-place:hover {
+      background-color: #e2e8f0;
+    }
+    .btn-place.active {
+      background-color: #3182ce;
+      color: white;
+      border-color: #3182ce;
+    }
+
     .action-bar {
       display: flex;
       gap: 10px;
@@ -86,7 +153,7 @@
       transition: background 0.15s, border-color 0.15s;
     }
 
-    /* ★ 学年ごとの左フチのアクセントカラー ★ */
+    /* 学年ごとの左フチのアクセントカラー */
     .member-card.grade-1 { border-left: 6px solid #4299e1; } /* 1年生: 青 */
     .member-card.grade-2 { border-left: 6px solid #48bb78; } /* 2年生: 緑 */
     .member-card.grade-3 { border-left: 6px solid #ed8936; } /* 3年生: オレンジ */
@@ -136,7 +203,7 @@
     }
     textarea.result-box {
       width: 100%;
-      height: 240px;
+      height: 280px;
       background: #2d3748;
       color: #edf2f7;
       border: 1px solid #4a5568;
@@ -151,26 +218,54 @@
       border-color: #63b3ed;
     }
 
-    /* スマホ対応（画面幅600px以下） */
+    /* スマホ対応 */
     @media (max-width: 600px) {
       body { padding: 10px; }
       .container { padding: 16px; }
       h1 { font-size: 1.25rem; }
+      .info-row { flex-direction: column; align-items: flex-start; gap: 6px; }
       .action-bar button { flex: 1; padding: 12px 8px; }
       .member-grid { grid-template-columns: 1fr; max-height: 350px; }
       .member-card { padding: 12px; }
       .check-wrapper input[type="checkbox"] { width: 26px; height: 26px; }
       .result-header { flex-direction: column; align-items: stretch; gap: 8px; }
       .result-header button { width: 100%; padding: 12px; }
-      textarea.result-box { height: 180px; font-size: 0.9rem; }
+      textarea.result-box { height: 220px; font-size: 0.9rem; }
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>曲かけ順メーカー</h1>
-  <p class="desc">チェックを入れると【①級 ➔ ②学年 ➔ ③あいうえお順で名前が下に出力されます。</p>
+  <h1>出席者管理・自動ソートツール</h1>
+  <p class="desc">チェックを入れると【①級 ➔ ②部活年次 ➔ ③フリガナのあいうえお順】でソートされた名前が下に出力されます。</p>
+
+  <!-- ★ 練習設定パネル ★ -->
+  <div class="practice-info-panel">
+    <div class="info-row">
+      <span class="info-label">陸トレ:</span>
+      <label class="checkbox-label">
+        <input type="checkbox" id="hasRikutore" onchange="updateResult()">
+        陸トレあり (8:00〜)
+      </label>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">貸切時間:</span>
+      <input type="text" id="charterTime" class="time-input" value="8:30" placeholder="8:30" oninput="updateResult()">
+      <span>〜</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">場所:</span>
+      <div class="place-buttons">
+        <button class="btn-place active" onclick="selectPlace('南船橋', this)">南船橋</button>
+        <button class="btn-place" onclick="selectPlace('東大和', this)">東大和</button>
+        <button class="btn-place" onclick="selectPlace('神宮', this)">神宮</button>
+        <button class="btn-place" onclick="selectPlace('辰巳', this)">辰巳</button>
+      </div>
+    </div>
+  </div>
 
   <div class="action-bar">
     <button class="btn-secondary" onclick="selectAll(true)">全員チェック</button>
@@ -189,6 +284,18 @@
 </div>
 
 <script>
+  // ----------------------------------------------------
+  // ★ 場所の略称 ➔ 正式名称 マッピング
+  // ----------------------------------------------------
+  const placeFullNameMap = {
+    "南船橋": "南船橋Aリンク",
+    "東大和": "東大和スケートセンター",
+    "神宮": "神宮",
+    "辰巳": "辰巳メインリンク"
+  };
+
+  let selectedPlaceKey = "南船橋"; // デフォルト設定
+
   // ----------------------------------------------------
   // ★ メンバー登録リスト
   // ----------------------------------------------------
@@ -238,14 +345,11 @@
    
   ];
 
- 
-  // 級の優先ランク
   const rankPriority = {
     "無級": 0, "初級": 1, "1級": 2, "2級": 3,
     "3級": 4, "4級": 5, "5級": 6, "6級": 7, "7級": 8
   };
 
-  // 学年文字列から数字を取り出す内部関数
   function extractNumber(gradeStr) {
     if (!gradeStr) return 99;
     const kanjiMap = { "一": 1, "二": 2, "三": 3, "四": 4, "１": 1, "２": 2, "３": 3, "４": 4 };
@@ -256,25 +360,20 @@
     return isNaN(num) ? 99 : num;
   }
 
-  // ★ 表示用学年の数字を取得（見た目の色・デザイン用）
   function parseDisplayGrade(member) {
     return extractNumber(member.grade);
   }
 
-  // ★ ソート用部活年次の数字を取得（並び替え・曲かけ順用）
   function parseSortGrade(member) {
-    // clubGrade が書いてあればそれを使い、無ければ grade を使う
     const targetGrade = member.clubGrade || member.grade;
     return extractNumber(targetGrade);
   }
 
   let members = [];
 
-  // 初期化関数
   function init() {
     members = initialMembers.map(m => ({ ...m, checked: false }));
     
-    // 画面一覧の並び順（①ソート用部活年次：1年 ➔ 2年 ➔ 3年 ➔ 4年、②同じ年次内はフリガナ順）
     members.sort((a, b) => {
       const gA = parseSortGrade(a);
       const gB = parseSortGrade(b);
@@ -285,15 +384,13 @@
     render();
   }
 
-  // 画面描画
   function render() {
     const listEl = document.getElementById('memberList');
     listEl.innerHTML = '';
 
     members.forEach(member => {
-     // アクセントカラーの色フチも「ソート用部活年次」の数字を使用
-     const sortGradeNum = parseSortGrade(member);
-     const gradeClass = `grade-${sortGradeNum}`;
+      const sortGradeNum = parseSortGrade(member);
+      const gradeClass = `grade-${sortGradeNum}`;
 
       const card = document.createElement('div');
       card.className = `member-card ${gradeClass} ${member.checked ? 'checked' : ''}`;
@@ -326,6 +423,15 @@
     render();
   }
 
+  // ★ 場所ボタンの切り替え処理 ★
+  function selectPlace(key, btnEl) {
+    selectedPlaceKey = key;
+    document.querySelectorAll('.btn-place').forEach(btn => btn.classList.remove('active'));
+    btnEl.classList.add('active');
+    updateResult();
+  }
+
+  // ★ 結果更新処理 ★
   function updateResult() {
     const attendees = members.filter(m => m.checked);
 
@@ -334,7 +440,20 @@
       return;
     }
 
-    // コピー結果の並び替え（①級 ➔ ②ソート用部活年次 ➔ ③フリガナ順）
+    // 1. 先頭テキストの構築
+    const hasRikutore = document.getElementById('hasRikutore').checked;
+    const charterTime = document.getElementById('charterTime').value.trim() || "〇:〇";
+    const placeFullName = placeFullNameMap[selectedPlaceKey] || selectedPlaceKey;
+
+    let headerText = "";
+    if (hasRikutore) {
+      headerText += `陸トレ8:00〜、`;
+    }
+    headerText += `貸切${charterTime}〜\n`;
+    headerText += `${placeFullName}です。\n\n`;
+    headerText += `曲かけTop Gun\n`;
+
+    // 2. メンバーの並び替え（①級 ➔ ②ソート用部活年次 ➔ ③フリガナ順）
     attendees.sort((a, b) => {
       const rA = rankPriority[a.rank] ?? 99;
       const rB = rankPriority[b.rank] ?? 99;
@@ -347,13 +466,15 @@
       return a.kana.localeCompare(b.kana, 'ja');
     });
 
+    // 3. 名前リストと末尾テキストの結合
     const names = attendees.map(m => m.name);
-    let resultString = names.join('\n5秒\n');
+    const namesList = names.join('\n5秒\n');
 
     const footerText = "\n5秒\n初級課題\n一級課題\nよろしくお願いいたします。";
-    resultString += footerText;
 
-    document.getElementById('resultText').value = resultString;
+    const finalResult = headerText + namesList + footerText;
+
+    document.getElementById('resultText').value = finalResult;
   }
 
   function copyResult() {
